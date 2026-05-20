@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tarefas</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>📋</text></svg>">
+
+</head>
+<body>
+    <h1> Lista de Tarefas</h1>
+
+    <form id="tarefaForm">
+        <div>
+            <label>Tarefa:</label>
+            <input type="text" id="tarefa" required placeholder="Ex: Estudar Histologia">
+        </div>
+        <div class="form-group">
+            <label>Descrição:</label>
+            <textarea id="descricao" rows="2" placeholder="detalhes da tarefa..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Prioridade:</label>
+            <select id="prioridade">
+                <opition value="Baixa">Baixa</opition>
+                <opition value="Média" selected>Média</opition>
+                <opition value="Alta">Alta</opition>
+            </select>
+        </div>
+        <button type="submit">Adicionar Tarefa</button>
+    </form>
+    <div id="listaTarefas"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/tarefas';
+
+        // Carregar tarefas do backend
+        async function carregarTarefas() {
+            const res = await fetch(API_URL);
+            const tarefas = await res.json();
+            const container = document.getElementById('listaTarefas');
+            container.innerHTML = '';
+
+            tarefas.forEach(t => {
+                const card = document.createElement('div');
+                card.className = `tarefa-card ${t.status}`;
+                card.innerHTML = `
+                    <h3>${t.tarefa}</h3>
+                    <p>${t.descricao}</p>
+                    <div class="meta-info"><strong>Prioridade:</strong> ${t.prioridades}</div>
+                    <div class="meta-info"><strong>Status:</strong> ${t.status}</div>
+                    ${t.status !== 'Concluída' ? `<button class="btn-status" onclick="concluirTarefa(${t.id})">Marcar como Concluída</button>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Enviar nova tarefa para o backend
+        document.getElementById('tarefaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const novaTarefa = {
+                tarefa: document.getElementById('tarefa').value,
+                descricao: document.getElementById('descricao').value,
+                prioridades: document.getElementById('prioridade').value,
+                status: 'Pendente'
+            };
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaTarefa)
+            });
+
+            document.getElementById('tarefaForm').reset();
+            carregarTarefas();
+        });
+
+        // Atualizar status da tarefa para Concluída
+        async function concluirTarefa(id) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Concluída' })
+            });
+            carregarTarefas();
+        }
+
+        // Inicializa a página buscando os dados
+        carregarTarefas();
+    </script>
+</body>
+</html>
