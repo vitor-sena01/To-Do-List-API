@@ -11,14 +11,17 @@ let tarefas = [
         id: 1,
         tarefa: "Estudar para a prova",
         descricao: "Revisar a matéria de Histologia",
+        prioridades: "Alta", // <-- Adicionado para manter a consistência com o HTML
         status: "Pendente"
     },
 ];
 
+// 1. Listar todas as tarefas (GET)
 app.get('/api/tarefas', (req, res) =>{
     res.json(tarefas);
 });
 
+// 2. Criar uma nova tarefa (POST)
 app.post('/api/tarefas', (req, res) => {
     const { tarefa, descricao, prioridades, status } = req.body;
     
@@ -38,6 +41,7 @@ app.post('/api/tarefas', (req, res) => {
     res.status(201).json(novaTarefa);
 });
 
+// 3. Alterar o status de uma tarefa (PATCH)
 app.patch('/api/tarefas/:id', (req, res) => {
     const { id } = req.params;
     const { status } = req.body;

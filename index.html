@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Tarefas</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>📋</text></svg>">
-
 </head>
 <body>
-    <h1> Lista de Tarefas</h1>
+    <h1>Lista de Tarefas</h1>
 
     <form id="tarefaForm">
         <div>
@@ -22,13 +21,14 @@
         <div class="form-group">
             <label>Prioridade:</label>
             <select id="prioridade">
-                <opition value="Baixa">Baixa</opition>
-                <opition value="Média" selected>Média</opition>
-                <opition value="Alta">Alta</opition>
+                <option value="Baixa">Baixa</option>
+                <option value="Média" selected>Média</option>
+                <option value="Alta">Alta</option>
             </select>
         </div>
         <button type="submit">Adicionar Tarefa</button>
     </form>
+    
     <div id="listaTarefas"></div>
 
     <script>
@@ -62,7 +62,7 @@
             const novaTarefa = {
                 tarefa: document.getElementById('tarefa').value,
                 descricao: document.getElementById('descricao').value,
-                prioridades: document.getElementById('prioridade').value,
+                prioridades: document.getElementById('prioridade').value, // lendo o select atualizado
                 status: 'Pendente'
             };
 
