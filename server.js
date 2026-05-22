@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // Módulo nativo do Node para lidar com caminhos de arquivos
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 
 const app = express();
@@ -16,9 +16,13 @@ let tarefas = [
         tarefa: "Estudar para a prova",
         descricao: "Revisar a matéria de Histologia",
         prioridades: "Alta",
-        status: "Pendente"
+        status: "Pendente",
+        criadaEm: new Date().toISOString()
     },
 ];
+
+// Controle de ID incremental (evita colisões ao deletar itens)
+let proximoId = 2;
 
 // =========================================================================
 // 1. CONFIGURAÇÃO DO SWAGGER (Documentação da API)
@@ -28,17 +32,27 @@ const swaggerDocument = {
     info: {
         title: "Equipe 10 - API de Lista de Tarefas",
         description: "Documentação da API de tarefas desenvolvida em Node.js e Express.",
-        version: "1.0.0"
+        version: "1.1.0"
     },
-    servers: [
-        {
-            url: `http://localhost:${PORT}`
-        }
-    ],
+    servers: [{ url: `http://localhost:${PORT}` }],
     paths: {
         "/api/tarefas": {
             get: {
                 summary: "Retorna todas as tarefas",
+                parameters: [
+                    {
+                        name: "status",
+                        in: "query",
+                        description: "Filtrar por status (Pendente | Concluída)",
+                        schema: { type: "string" }
+                    },
+                    {
+                        name: "prioridade",
+                        in: "query",
+                        description: "Filtrar por prioridade (Baixa | Média | Alta)",
+                        schema: { type: "string" }
+                    }
+                ],
                 responses: {
                     "200": { description: "Sucesso ao obter a lista de tarefas." }
                 }
@@ -54,8 +68,8 @@ const swaggerDocument = {
                                 properties: {
                                     tarefa: { type: "string", example: "Estudar Anatomia" },
                                     descricao: { type: "string", example: "Revisar sistema circulatório" },
-                                    prioridades: { type: "string", example: "Alta" },
-                                    status: { type: "string", example: "Pendente" }
+                                    prioridades: { type: "string", enum: ["Baixa", "Média", "Alta"], example: "Alta" },
+                                    status: { type: "string", enum: ["Pendente", "Concluída"], example: "Pendente" }
                                 },
                                 required: ["tarefa"]
                             }
@@ -64,20 +78,25 @@ const swaggerDocument = {
                 },
                 responses: {
                     "201": { description: "Tarefa criada com sucesso." },
-                    "400": { description: "Campo obrigatório ausente." }
+                    "400": { description: "Campo obrigatório ausente ou valor inválido." }
                 }
             }
         },
         "/api/tarefas/{id}": {
-            patch: {
-                summary: "Atualiza o status de uma tarefa específica",
+            get: {
+                summary: "Retorna uma tarefa específica pelo ID",
                 parameters: [
-                    {
-                        name: "id",
-                        in: "path",
-                        required: true,
-                        schema: { type: "integer" }
-                    }
+                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                ],
+                responses: {
+                    "200": { description: "Tarefa encontrada." },
+                    "404": { description: "Tarefa não encontrada." }
+                }
+            },
+            patch: {
+                summary: "Atualiza campos de uma tarefa específica",
+                parameters: [
+                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
                 ],
                 requestBody: {
                     required: true,
@@ -86,14 +105,27 @@ const swaggerDocument = {
                             schema: {
                                 type: "object",
                                 properties: {
-                                    status: { type: "string", example: "Concluída" }
+                                    tarefa: { type: "string" },
+                                    descricao: { type: "string" },
+                                    prioridades: { type: "string", enum: ["Baixa", "Média", "Alta"] },
+                                    status: { type: "string", enum: ["Pendente", "Concluída"] }
                                 }
                             }
                         }
                     }
                 },
                 responses: {
-                    "200": { description: "Status atualizado com sucesso." },
+                    "200": { description: "Tarefa atualizada com sucesso." },
+                    "404": { description: "Tarefa não encontrada." }
+                }
+            },
+            delete: {
+                summary: "Remove uma tarefa pelo ID",
+                parameters: [
+                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
+                ],
+                responses: {
+                    "200": { description: "Tarefa removida com sucesso." },
                     "404": { description: "Tarefa não encontrada." }
                 }
             }
@@ -101,64 +133,118 @@ const swaggerDocument = {
     }
 };
 
-// Rota onde o Swagger vai rodar
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // =========================================================================
 // 2. ROTAS DA API
 // =========================================================================
 
-// Rota para listar todas as tarefas (GET)
+const PRIORIDADES_VALIDAS = ["Baixa", "Média", "Alta"];
+const STATUS_VALIDOS = ["Pendente", "Concluída"];
+
+// GET /api/tarefas — lista todas (com filtros opcionais por query string)
 app.get('/api/tarefas', (req, res) => {
-    res.json(tarefas);
+    let resultado = [...tarefas];
+
+    if (req.query.status) {
+        resultado = resultado.filter(t => t.status === req.query.status);
+    }
+    if (req.query.prioridade) {
+        resultado = resultado.filter(t => t.prioridades === req.query.prioridade);
+    }
+
+    res.json(resultado);
 });
 
-// Rota para criar uma nova tarefa (POST)
+// GET /api/tarefas/:id — retorna uma tarefa específica
+app.get('/api/tarefas/:id', (req, res) => {
+    const tarefa = tarefas.find(t => t.id === parseInt(req.params.id));
+    if (!tarefa) return res.status(404).json({ error: "Tarefa não encontrada." });
+    res.json(tarefa);
+});
+
+// POST /api/tarefas — cria uma nova tarefa
 app.post('/api/tarefas', (req, res) => {
     const { tarefa, descricao, prioridades, status } = req.body;
-    
-    if (!tarefa) {
-        return res.status(400).json({ error: "O campo 'Tarefa' é obrigatório." });
+
+    if (!tarefa || typeof tarefa !== 'string' || tarefa.trim() === '') {
+        return res.status(400).json({ error: "O campo 'tarefa' é obrigatório e não pode ser vazio." });
+    }
+
+    if (prioridades && !PRIORIDADES_VALIDAS.includes(prioridades)) {
+        return res.status(400).json({ error: `Prioridade inválida. Use: ${PRIORIDADES_VALIDAS.join(', ')}.` });
+    }
+
+    if (status && !STATUS_VALIDOS.includes(status)) {
+        return res.status(400).json({ error: `Status inválido. Use: ${STATUS_VALIDOS.join(', ')}.` });
     }
 
     const novaTarefa = {
-        id: tarefas.length + 1,
-        tarefa,
-        descricao: descricao || "",
+        id: proximoId++,
+        tarefa: tarefa.trim(),
+        descricao: descricao?.trim() || "",
         prioridades: prioridades || "Média",
-        status: status || "Pendente"
+        status: status || "Pendente",
+        criadaEm: new Date().toISOString()
     };
 
     tarefas.push(novaTarefa);
     res.status(201).json(novaTarefa);
 });
 
-// Rota para alterar o status de uma tarefa (PATCH)
+// PATCH /api/tarefas/:id — atualiza campos de uma tarefa
 app.patch('/api/tarefas/:id', (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
+    const tarefa = tarefas.find(t => t.id === parseInt(req.params.id));
+    if (!tarefa) return res.status(404).json({ error: "Tarefa não encontrada." });
 
-    const tarefaEncontrada = tarefas.find(t => t.id === parseInt(id));
+    const { tarefa: nome, descricao, prioridades, status } = req.body;
 
-    if (!tarefaEncontrada) {
-        return res.status(404).json({ error: "Tarefa não encontrada." });
+    if (nome !== undefined) {
+        if (typeof nome !== 'string' || nome.trim() === '') {
+            return res.status(400).json({ error: "O campo 'tarefa' não pode ser vazio." });
+        }
+        tarefa.tarefa = nome.trim();
     }
 
-    tarefaEncontrada.status = status;
-    res.json(tarefaEncontrada);
+    if (descricao !== undefined) tarefa.descricao = descricao.trim();
+
+    if (prioridades !== undefined) {
+        if (!PRIORIDADES_VALIDAS.includes(prioridades)) {
+            return res.status(400).json({ error: `Prioridade inválida. Use: ${PRIORIDADES_VALIDAS.join(', ')}.` });
+        }
+        tarefa.prioridades = prioridades;
+    }
+
+    if (status !== undefined) {
+        if (!STATUS_VALIDOS.includes(status)) {
+            return res.status(400).json({ error: `Status inválido. Use: ${STATUS_VALIDOS.join(', ')}.` });
+        }
+        tarefa.status = status;
+    }
+
+    res.json(tarefa);
+});
+
+// DELETE /api/tarefas/:id — remove uma tarefa
+app.delete('/api/tarefas/:id', (req, res) => {
+    const index = tarefas.findIndex(t => t.id === parseInt(req.params.id));
+    if (index === -1) return res.status(404).json({ error: "Tarefa não encontrada." });
+
+    const removida = tarefas.splice(index, 1)[0];
+    res.json({ message: "Tarefa removida com sucesso.", tarefa: removida });
 });
 
 // =========================================================================
-// 3. ROTA PARA SERVIR O FRONTEND (HTML) NO TERMINAL
+// 3. FRONTEND
 // =========================================================================
-// Quando você acessar a raiz http://localhost:3000, o servidor vai enviar o index.html
+app.use(express.static(path.join(__dirname)));
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Iniciando o servidor
 app.listen(PORT, () => {
     console.log(`\n🚀 Servidor rodando com sucesso!`);
-    console.log(`💻 Acesse o Frontend em: http://localhost:${PORT}`);
-    console.log(`📄 Acesse o Swagger (Documentação) em: http://localhost:${PORT}/api-docs\n`);
+    console.log(`💻 Frontend:      http://localhost:${PORT}`);
+    console.log(`📄 Swagger Docs:  http://localhost:${PORT}/api-docs\n`);
 });
