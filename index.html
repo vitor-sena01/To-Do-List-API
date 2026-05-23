@@ -37,26 +37,39 @@
         const API_URL = '/api/tarefas';
 
         // 1. FUNÇÃO QUE BUSCA AS TAREFAS DO SERVIDOR E MOSTRA NA TELA
-        async function carregarTarefas() {
-            const res = await fetch(API_URL);
-            const tarefas = await res.json();
-            const container = document.getElementById('listaTarefas');
-            container.innerHTML = ''; // Limpa a tela antes de redesenhar
+        // Substitua a função carregarTarefas() no seu <script> do index.html por esta:
+async function carregarTarefas() {
+    const res = await fetch(API_URL);
+    const tarefas = await res.json();
+    const container = document.getElementById('listaTarefas');
+    container.innerHTML = ''; 
 
-            tarefas.forEach(t => {
-                const card = document.createElement('div');
-                card.className = `tarefa-card ${t.status}`;
-                card.innerHTML = `
-                    <h3>${t.tarefa}</h3>
-                    <p>${t.descricao}</p>
-                    <div class="meta-info"><strong>Prioridade:</strong> ${t.prioridades}</div>
-                    <div class="meta-info"><strong>Status:</strong> ${t.status}</div>
-                    ${t.status !== 'Concluída' ? `<button class="btn-status" onclick="concluirTarefa(${t.id})">Marcar como Concluída</button>` : ''}
-                `;
-                container.appendChild(card);
-            });
-        }
+    if (tarefas.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nenhuma tarefa cadastrada por enquanto.</div>';
+        return;
+    }
 
+    tarefas.forEach(t => {
+        const card = document.createElement('div');
+        // Adiciona a classe correspondente à prioridade (Alta, Média, Baixa) e ao status
+        card.className = `tarefa-card ${t.prioridades} ${t.status}`;
+        
+        card.innerHTML = `
+            <div class="card-left">
+                <button class="check-btn" onclick="concluirTarefa(${t.id})">✓</button>
+            </div>
+            <div class="card-body">
+                <div class="card-title">${t.tarefa}</div>
+                <div class="card-desc">${t.descricao || '<i>Sem descrição.</i>'}</div>
+                <div class="card-meta">
+                    <span class="badge prio-${t.prioridades}">Prioridade: ${t.prioridades}</span>
+                    <span class="badge status-${t.status}">${t.status}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
         // 2. FUNÇÃO QUE PEGA O QUE VOCÊ DIGITOU NA TELA E ENVIA PARA A API
         document.getElementById('tarefaForm').addEventListener('submit', async (e) => {
             e.preventDefault(); // Impede a página de atualizar do nada

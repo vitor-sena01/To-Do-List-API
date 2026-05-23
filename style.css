@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
 
-/* ===========================
-   TOKENS
-   =========================== */
+/* =========================================================================
+   TOKENS (VARIÁVEIS GERAIS)
+   ========================================================================= */
 :root {
-    --bg:        #f5f2ec;
-    --surface:   #ffffff;
-    --surface-2: #faf8f4;
-    --border:    #e4ddd3;
-    --border-2:  #d4ccc0;
-    --text:      #18160f;
-    --muted:     #8a8278;
-    --accent:    #2b5bff;
-    --accent-bg: #edf0ff;
+    --bg:         #f5f2ec;
+    --surface:    #ffffff;
+    --surface-2:  #faf8f4;
+    --border:     #e4ddd3;
+    --border-2:   #d4ccc0;
+    --text:       #18160f;
+    --muted:      #8a8278;
+    --accent:     #2b5bff;
+    --accent-bg:  #edf0ff;
     --accent-dark: #1a47e8;
 
     --prio-alta:       #c0392b;
@@ -32,17 +32,15 @@
     --font-mono:  'DM Mono', 'Courier New', monospace;
 }
 
-/* ===========================
-   RESET
-   =========================== */
+/* =========================================================================
+   RESET & CONFIGURAÇÕES BASE
+   ========================================================================= */
 *, *::before, *::after {
-    margin: 0; padding: 0;
+    margin: 0; 
+    padding: 0;
     box-sizing: border-box;
 }
 
-/* ===========================
-   BASE
-   =========================== */
 body {
     background: var(--bg);
     color: var(--text);
@@ -52,7 +50,7 @@ body {
     min-height: 100vh;
 }
 
-/* Noise texture */
+/* Textura sutil de fundo (Noise) */
 .noise {
     position: fixed;
     inset: 0;
@@ -63,9 +61,9 @@ body {
     background-size: 200px;
 }
 
-/* ===========================
-   HEADER
-   =========================== */
+/* =========================================================================
+   HEADER (BARRA SUPERIOR FIXA)
+   ========================================================================= */
 header {
     position: sticky;
     top: 0;
@@ -120,9 +118,9 @@ header {
 
 .stat-sep { opacity: .35; }
 
-/* ===========================
-   MAIN
-   =========================== */
+/* =========================================================================
+   LAYOUT PRINCIPAL (MAIN)
+   ========================================================================= */
 main {
     max-width: 740px;
     margin: 0 auto;
@@ -134,9 +132,6 @@ main {
     gap: 44px;
 }
 
-/* ===========================
-   SECTION TITLE
-   =========================== */
 .section-title {
     font-family: var(--font-serif);
     font-size: 23px;
@@ -146,9 +141,9 @@ main {
     color: var(--text);
 }
 
-/* ===========================
-   FORM
-   =========================== */
+/* =========================================================================
+   FORMULÁRIO DE CADASTRO
+   ========================================================================= */
 .form-section {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -159,7 +154,7 @@ main {
     overflow: hidden;
 }
 
-/* Decorative top bar */
+/* Detalhe colorido no topo do card do formulário */
 .form-section::before {
     content: '';
     position: absolute;
@@ -236,12 +231,11 @@ select {
     cursor: pointer;
 }
 
-/* ===========================
-   ADD BUTTON
-   =========================== */
+/* Botão de envio principal */
 .btn-add {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
     padding: 11px 22px;
     background: var(--accent);
@@ -273,9 +267,9 @@ select {
     margin-top: -1px;
 }
 
-/* ===========================
-   LIST HEADER + FILTERS
-   =========================== */
+/* =========================================================================
+   LISTAGEM FILTROS E CONTEÚDO
+   ========================================================================= */
 .list-header {
     display: flex;
     align-items: center;
@@ -318,26 +312,28 @@ select {
     box-shadow: 0 1px 4px rgba(43,91,255,.25);
 }
 
-/* ===========================
-   TASK CARDS
-   =========================== */
-.lista {
+/* Conteiner das tarefas */
+#listaTarefas, .lista {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    width: 100%;
 }
 
+/* =========================================================================
+   CARDS DE TAREFA INDIVIDUAL
+   ========================================================================= */
 .tarefa-card {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
+    gap: 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 17px 18px 17px 22px;
+    padding: 18px 20px;
     box-shadow: var(--shadow);
     animation: slideIn .32s cubic-bezier(.16,1,.3,1) both;
-    transition: box-shadow .2s, border-color .2s, transform .2s;
+    transition: box-shadow .2s, border-color .2s, transform .2s, opacity .2s;
     position: relative;
     overflow: hidden;
 }
@@ -348,40 +344,43 @@ select {
     transform: translateY(-1px);
 }
 
-.tarefa-card.status-concluida {
-    opacity: .6;
+/* Estado da tarefa quando está Concluída */
+.tarefa-card.Concluída {
+    opacity: .65;
     background: var(--surface-2);
 }
 
-.tarefa-card.status-concluida:hover { opacity: .75; }
+.tarefa-card.Concluída:hover { opacity: .85; }
 
 @keyframes slideIn {
     from { opacity: 0; transform: translateY(12px) scale(.99); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Stripe lateral de prioridade */
+/* Indicador lateral esquerdo baseado na prioridade */
 .tarefa-card::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 4px;
+    width: 5px;
     background: var(--border);
-    border-radius: var(--radius) 0 0 var(--radius);
 }
 
-.tarefa-card.prio-alta::before   { background: var(--prio-alta); }
-.tarefa-card.prio-media::before  { background: var(--prio-media); }
-.tarefa-card.prio-baixa::before  { background: var(--prio-baixa); }
+.tarefa-card.Alta::before  { background: var(--prio-alta); }
+.tarefa-card.Média::before { background: var(--prio-media); }
+.tarefa-card.Baixa::before { background: var(--prio-baixa); }
 
-/* ===========================
-   CHECK BUTTON
-   =========================== */
-.card-left { padding-top: 2px; flex-shrink: 0; }
+/* =========================================================================
+   BOTÃO CHECK (MARCAR COMO CONCLUÍDO)
+   ========================================================================= */
+.card-left { 
+    padding-top: 2px; 
+    flex-shrink: 0; 
+}
 
 .check-btn {
-    width: 23px;
-    height: 23px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: 2px solid var(--border-2);
     background: transparent;
@@ -390,9 +389,8 @@ select {
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    color: #fff;
+    color: transparent;
     transition: background .18s, border-color .18s, transform .12s, box-shadow .18s;
-    flex-shrink: 0;
 }
 
 .check-btn:hover {
@@ -403,100 +401,82 @@ select {
 
 .check-btn:active { transform: scale(.88); }
 
-.check-btn.checked {
+/* Quando clicado/concluído */
+.tarefa-card.Concluída .check-btn {
     background: var(--prio-baixa);
     border-color: var(--prio-baixa);
     box-shadow: 0 2px 6px rgba(30,143,85,.25);
+    color: #fff; /* Mostra o ícone de Check */
 }
 
-/* ===========================
-   CARD BODY
-   =========================== */
-.card-body { flex: 1; min-width: 0; }
+/* =========================================================================
+   CONTEÚDO DO CARD
+   ========================================================================= */
+.card-body { 
+    flex: 1; 
+    min-width: 0; 
+}
 
 .card-title {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.4;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    color: var(--text);
     word-break: break-word;
-    transition: color .2s;
+    transition: color .2s, text-decoration .2s;
 }
 
-.card-title.riscado {
+/* Risco no título ao concluir */
+.tarefa-card.Concluída .card-title {
     text-decoration: line-through;
     color: var(--muted);
 }
 
 .card-desc {
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--muted);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     word-break: break-word;
     line-height: 1.5;
 }
 
+/* Badges de meta-informação */
 .card-meta {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
     margin-top: 10px;
 }
 
 .badge {
     font-family: var(--font-mono);
     font-size: 10px;
-    font-weight: 500;
-    padding: 2px 9px;
+    font-weight: 600;
+    padding: 3px 10px;
     border-radius: 100px;
+    text-transform: uppercase;
     letter-spacing: .2px;
 }
 
-.prio-badge.prio-alta   { background: var(--prio-alta-bg);   color: var(--prio-alta); }
-.prio-badge.prio-media  { background: var(--prio-media-bg);  color: var(--prio-media); }
-.prio-badge.prio-baixa  { background: var(--prio-baixa-bg);  color: var(--prio-baixa); }
+/* Variações das badges de Prioridade */
+.badge.prio-Alta   { background: var(--prio-alta-bg);  color: var(--prio-alta); }
+.badge.prio-Média  { background: var(--prio-media-bg); color: var(--prio-media); }
+.badge.prio-Baixa  { background: var(--prio-baixa-bg); color: var(--prio-baixa); }
 
-.status-badge.status-pendente  { background: var(--accent-bg); color: var(--accent); }
-.status-badge.status-concluida { background: var(--prio-baixa-bg); color: var(--prio-baixa); }
+/* Variações das badges de Status */
+.badge.status-Pendente  { background: var(--accent-bg); color: var(--accent); }
+.badge.status-Concluída { background: var(--prio-baixa-bg); color: var(--prio-baixa); }
 
-.card-date {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--muted);
-    margin-left: auto;
-    opacity: .7;
+/* =========================================================================
+   AÇÕES DO CARD & DETALHES EXTRAS
+   ========================================================================= */
+.card-actions { 
+    flex-shrink: 0; 
+    padding-top: 2px; 
 }
 
-/* ===========================
-   DELETE BUTTON
-   =========================== */
-.card-actions { flex-shrink: 0; padding-top: 2px; }
-
-.btn-delete {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    color: #ccc5bc;
-    cursor: pointer;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .15s, color .15s, transform .1s;
-}
-
-.btn-delete:hover {
-    background: var(--prio-alta-bg);
-    color: var(--prio-alta);
-    transform: scale(1.1);
-}
-
-/* ===========================
-   EMPTY STATE
-   =========================== */
 .empty-state {
     text-align: center;
     padding: 64px 24px;
@@ -506,21 +486,9 @@ select {
     font-style: italic;
 }
 
-/* ===========================
-   RESPONSIVE
-   =========================== */
-@media (max-width: 540px) {
-    main { padding: 28px 18px 64px; }
-    .form-section { padding: 22px 20px; }
-    .field-row { flex-direction: column; align-items: stretch; }
-    .btn-add { width: 100%; justify-content: center; }
-    .list-header { flex-direction: column; align-items: flex-start; }
-    .header-inner { padding: 13px 18px; }
-}
-
-/* ===========================
-   VALIDAÇÃO CUSTOMIZADA
-   =========================== */
+/* =========================================================================
+   VALIDAÇÃO DE ERROS
+   ========================================================================= */
 .field-error {
     display: none;
     align-items: center;
@@ -535,15 +503,21 @@ select {
     margin-top: 4px;
 }
 
-.field-error.visible {
-    display: flex;
-}
-
-.field-error svg {
-    flex-shrink: 0;
-}
-
+.field-error.visible { display: flex; }
+.field-error svg { flex-shrink: 0; }
 input.input-invalid {
     border-color: #E24B4A;
     box-shadow: 0 0 0 3px rgba(226, 75, 74, .10);
+}
+
+/* =========================================================================
+   MEDIA QUERIES (RESPONSIVIDADE)
+   ========================================================================= */
+@media (max-width: 540px) {
+    main { padding: 28px 18px 64px; }
+    .form-section { padding: 22px 20px; }
+    .field-row { flex-direction: column; align-items: stretch; }
+    .btn-add { width: 100%; justify-content: center; }
+    .list-header { flex-direction: column; align-items: flex-start; }
+    .header-inner { padding: 13px 18px; }
 }
