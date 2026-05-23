@@ -8,73 +8,112 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Lista de Tarefas</h1>
 
-    <form id="tarefaForm">
-        <div class="form-group">
-            <label>Tarefa:</label>
-            <input type="text" id="tarefaInput" required placeholder="Ex: Estudar Histologia">
+    <div class="noise"></div>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">Equipe 10</span>
+            </div>
+            <div class="header-stats">
+                <span>Task Manager</span>
+                <span class="stat-sep">|</span>
+                <span>v1.0.0</span>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Descrição:</label>
-            <textarea id="descricaoInput" rows="2" placeholder="detalhes da tarefa..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>Prioridade:</label>
-            <select id="prioridadeSelect">
-                <option value="Baixa">Baixa</option>
-                <option value="Média" selected>Média</option>
-                <option value="Alta">Alta</option>
-            </select>
-        </div>
-        <button type="submit">Adicionar Tarefa</button>
-    </form>
-    
-    <div id="listaTarefas"></div>
+    </header>
+
+    <main>
+        
+        <section class="form-section">
+            <h2 class="section-title">Nova Tarefa</h2>
+            
+            <form id="tarefaForm">
+                <div class="field">
+                    <label for="tarefaInput">Tarefa <span class="required">*</span></label>
+                    <input type="text" id="tarefaInput" required placeholder="Ex: Estudar Histologia">
+                </div>
+                
+                <div class="field">
+                    <label for="descricaoInput">Descrição</label>
+                    <textarea id="descricaoInput" rows="2" placeholder="Detalhes da tarefa..."></textarea>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field">
+                        <label for="prioridadeSelect">Prioridade</label>
+                        <select id="prioridadeSelect">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média" selected>Média</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-add">
+                        <span class="btn-icon">+</span>
+                        Adicionar
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section>
+            <div class="list-header">
+                <h2 class="section-title">Suas Tarefas</h2>
+            </div>
+            
+            <div id="listaTarefas"></div>
+        </section>
+
+    </main>
 
     <script>
-        // Como o HTML roda no mesmo servidor, podemos usar o caminho relativo
         const API_URL = '/api/tarefas';
 
-        // 1. FUNÇÃO QUE BUSCA AS TAREFAS DO SERVIDOR E MOSTRA NA TELA
-        // Substitua a função carregarTarefas() no seu <script> do index.html por esta:
-async function carregarTarefas() {
-    const res = await fetch(API_URL);
-    const tarefas = await res.json();
-    const container = document.getElementById('listaTarefas');
-    container.innerHTML = ''; 
+        // 1. CARREGAR TAREFAS DO SERVIDOR (Montando a estrutura que casa com o CSS)
+        async function carregarTarefas() {
+            try {
+                const res = await fetch(API_URL);
+                const tarefas = await res.json();
+                const container = document.getElementById('listaTarefas');
+                container.innerHTML = ''; 
 
-    if (tarefas.length === 0) {
-        container.innerHTML = '<div class="empty-state">Nenhuma tarefa cadastrada por enquanto.</div>';
-        return;
-    }
+                if (tarefas.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Nenhuma tarefa cadastrada por enquanto.</div>';
+                    return;
+                }
 
-    tarefas.forEach(t => {
-        const card = document.createElement('div');
-        // Adiciona a classe correspondente à prioridade (Alta, Média, Baixa) e ao status
-        card.className = `tarefa-card ${t.prioridades} ${t.status}`;
-        
-        card.innerHTML = `
-            <div class="card-left">
-                <button class="check-btn" onclick="concluirTarefa(${t.id})">✓</button>
-            </div>
-            <div class="card-body">
-                <div class="card-title">${t.tarefa}</div>
-                <div class="card-desc">${t.descricao || '<i>Sem descrição.</i>'}</div>
-                <div class="card-meta">
-                    <span class="badge prio-${t.prioridades}">Prioridade: ${t.prioridades}</span>
-                    <span class="badge status-${t.status}">${t.status}</span>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-        // 2. FUNÇÃO QUE PEGA O QUE VOCÊ DIGITOU NA TELA E ENVIA PARA A API
+                tarefas.forEach(t => {
+                    const card = document.createElement('div');
+                    // Aplica as classes dinâmicas exatas para ler a borda lateral esquerda
+                    card.className = `tarefa-card ${t.prioridades} ${t.status}`;
+                    
+                    card.innerHTML = `
+                        <div class="card-left">
+                            <button class="check-btn" onclick="concluirTarefa(${t.id})" title="Marcar como concluída">✓</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">${t.tarefa}</div>
+                            <div class="card-desc">${t.descricao || '<i>Sem descrição fornecida.</i>'}</div>
+                            <div class="card-meta">
+                                <span class="badge prio-${t.prioridades}">Prioridade: ${t.prioridades}</span>
+                                <span class="badge status-${t.status}">${t.status}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar tarefas:", error);
+            }
+        }
+
+        // 2. ENVIAR NOVA TAREFA VIA INTERFACE (POST)
         document.getElementById('tarefaForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Impede a página de atualizar do nada
+            e.preventDefault();
             
-            // Pega os valores exatos dos campos digitados no localhost
             const novaTarefa = {
                 tarefa: document.getElementById('tarefaInput').value,
                 descricao: document.getElementById('descricaoInput').value,
@@ -82,31 +121,35 @@ async function carregarTarefas() {
                 status: 'Pendente'
             };
 
-            // Dispara o envio (POST) para o servidor
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(novaTarefa)
-            });
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(novaTarefa)
+                });
 
-            // Limpa os campos do formulário para você digitar a próxima
-            document.getElementById('tarefaForm').reset();
-            
-            // Atualiza a lista na tela com a nova tarefa inclusa
-            carregarTarefas();
+                document.getElementById('tarefaForm').reset();
+                carregarTarefas(); // Atualiza a tela imediatamente
+            } catch (error) {
+                console.error("Erro ao salvar tarefa:", error);
+            }
         });
 
-        // 3. FUNÇÃO PARA MARCAR COMO CONCLUÍDA
+        // 3. ATUALIZAR STATUS DA TAREFA PARA CONCLUÍDA (PATCH)
         async function concluirTarefa(id) {
-            await fetch(`${API_URL}/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'Concluída' })
-            });
-            carregarTarefas();
+            try {
+                await fetch(`${API_URL}/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Concluída' })
+                });
+                carregarTarefas(); // Recarrega para aplicar a opacidade e o risco no texto
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+            }
         }
 
-        // Executa automaticamente assim que a página abre
+        // Inicialização automática ao entrar na página
         carregarTarefas();
     </script>
 </body>
