@@ -96,7 +96,6 @@ function configurarFormulario() {
         const btn = form.querySelector('.btn-add');
         if (btn) btn.disabled = true;
 
-        // Mapeamento idêntico ao esperado pelo server.js
         const dados = {
             tarefa:      nomeTarefa,
             descricao:   document.getElementById('descricao')?.value.trim() || '',
@@ -108,7 +107,7 @@ function configurarFormulario() {
             await adicionarTarefa(dados);
             form.reset();
 
-            // Força a aba ativa para "Todas" para que a nova tarefa recém-criada apareça
+            // Reseta para a aba 'Todas' ao criar para que o usuário veja a nova tarefa
             filtroAtivo = 'Todas';
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.filter === 'Todas');
@@ -148,7 +147,7 @@ function renderizarTarefas() {
 
     if (!container) return;
 
-    // Padroniza as chaves vindas da API (prioridades / prioridade)
+    // Normalização das chaves vindas da API (prioridades vs prioridade)
     const listaNormalizada = todasTarefas.map(t => ({
         id: t.id,
         tarefa: t.tarefa || t.nome || 'Sem título',
@@ -182,7 +181,6 @@ function criarCard(t, i) {
     const statusSlug = slugify(t.status);
     const prioSlug = slugify(t.prioridades);
 
-    // Classes necessárias para a estilização do CSS (borda lateral e badge)
     card.className = `tarefa-card ${t.status} ${t.prioridades} status-${statusSlug} prio-${prioSlug}`;
     card.style.animationDelay = `${i * 60}ms`;
 

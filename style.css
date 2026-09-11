@@ -1,47 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* =========================================================================
-   TOKENS & PALETA DE CORES (PALETA MODERNA / DARK-TINTED / NEUMORPHIC CLEAN)
-   ========================================================================= */
 :root {
-    /* Superfícies & Fundos */
-    --bg:           #0f172a; /* Slate 900 */
-    --surface:      #1e293b; /* Slate 800 */
-    --surface-2:    #334155; /* Slate 700 */
+    --bg:           #0f172a;
+    --surface:      #1e293b;
+    --surface-2:    #334155;
     --border:       rgba(255, 255, 255, 0.08);
     --border-hover: rgba(255, 255, 255, 0.18);
     
-    /* Tipografia */
-    --text:         #f8fafc; /* Slate 50 */
-    --text-muted:   #94a3b8; /* Slate 400 */
+    --text:         #f8fafc;
+    --text-muted:   #94a3b8;
     
-    /* Cores de Destaque / Acento (Vibrant Indigo & Cyan) */
-    --accent:       #6366f1; /* Indigo 500 */
-    --accent-hover: #4f46e5; /* Indigo 600 */
+    --accent:       #6366f1;
+    --accent-hover: #4f46e5;
     --accent-glow:  rgba(99, 102, 241, 0.25);
     
-    /* Cores de Prioridade (Gradientes e Tons Vibrantes em Dark Mode) */
-    --prio-alta:       #f43f5e; /* Rose 500 */
+    --prio-alta:       #f43f5e;
     --prio-alta-bg:    rgba(244, 63, 94, 0.12);
-    --prio-media:      #f59e0b; /* Amber 500 */
+    --prio-media:      #f59e0b;
     --prio-media-bg:   rgba(245, 158, 11, 0.12);
-    --prio-baixa:      #10b981; /* Emerald 500 */
+    --prio-baixa:      #10b981;
     --prio-baixa-bg:   rgba(16, 185, 129, 0.12);
 
-    /* Geometria & Sombra */
     --radius:    16px;
     --radius-sm: 10px;
     --shadow:    0 4px 20px -2px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 12px 30px -4px rgba(0, 0, 0, 0.6);
 
-    /* Fontes */
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* =========================================================================
-   RESET & BASE
-   ========================================================================= */
 *, *::before, *::after {
     margin: 0; 
     padding: 0;
@@ -58,7 +46,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Efeito Glow / Noise de fundo */
 .noise {
     position: fixed;
     inset: 0;
@@ -69,9 +56,6 @@ body {
         radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 45%);
 }
 
-/* =========================================================================
-   HEADER
-   ========================================================================= */
 header {
     position: sticky;
     top: 0;
@@ -110,6 +94,7 @@ header {
     font-size: 20px;
     letter-spacing: -0.5px;
     background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -127,15 +112,9 @@ header {
     border: 1px solid var(--border);
 }
 
-.header-stats strong {
-    color: var(--text);
-}
-
+.header-stats strong { color: var(--text); }
 .stat-sep { opacity: 0.3; }
 
-/* =========================================================================
-   LAYOUT PRINCIPAL
-   ========================================================================= */
 main {
     max-width: 760px;
     margin: 0 auto;
@@ -154,9 +133,6 @@ main {
     color: var(--text);
 }
 
-/* =========================================================================
-   FORMULÁRIO DE CADASTRO
-   ========================================================================= */
 .form-section {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -188,10 +164,7 @@ main {
     gap: 16px;
 }
 
-.field-row .field {
-    flex: 1;
-    margin-bottom: 0;
-}
+.field-row .field { flex: 1; margin-bottom: 0; }
 
 label {
     font-size: 12px;
@@ -268,9 +241,6 @@ select option {
 
 .btn-add:active { transform: translateY(0); }
 
-/* =========================================================================
-   FILTROS & LISTA
-   ========================================================================= */
 .list-header {
     display: flex;
     align-items: center;
@@ -315,9 +285,6 @@ select option {
     gap: 12px;
 }
 
-/* =========================================================================
-   CARDS DE TAREFA
-   ========================================================================= */
 .tarefa-card {
     display: flex;
     align-items: flex-start;
@@ -350,7 +317,6 @@ select option {
 .tarefa-card.Média::before { background: var(--prio-media); }
 .tarefa-card.Baixa::before { background: var(--prio-baixa); }
 
-/* Card Concluído */
 .tarefa-card.Concluída {
     opacity: 0.6;
     background: rgba(30, 41, 59, 0.5);
@@ -358,7 +324,6 @@ select option {
 
 .tarefa-card.Concluída:hover { opacity: 0.85; }
 
-/* Check Button */
 .check-btn {
     width: 24px;
     height: 24px;
@@ -385,7 +350,6 @@ select option {
     color: #fff;
 }
 
-/* Body do Card */
 .card-body { flex: 1; }
 
 .card-title {
@@ -406,7 +370,6 @@ select option {
     margin-bottom: 12px;
 }
 
-/* Badges */
 .card-meta {
     display: flex;
     align-items: center;
@@ -430,7 +393,6 @@ select option {
 .badge.status-Pendente  { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
 .badge.status-Concluída { background: var(--prio-baixa-bg); color: var(--prio-baixa); }
 
-/* Ações e Botão Deletar */
 .btn-delete {
     background: transparent;
     border: none;
@@ -462,7 +424,6 @@ select option {
     border-radius: var(--radius);
 }
 
-/* Validação */
 .field-error {
     display: none;
     align-items: center;
