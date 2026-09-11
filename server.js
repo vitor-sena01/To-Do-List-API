@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
-const open = require('open');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -170,11 +170,4 @@ app.listen(PORT, () => {
     console.log(`\n🚀 Servidor rodando com sucesso!`);
     console.log(`💻 Aplicação:    http://localhost:${PORT}`);
     console.log(`📄 Swagger Docs: http://localhost:${PORT}/api-docs\n`);
-});
-
-app.listen(PORT, async () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-
-    // Abre o navegador automaticamente na documentação
-    await open(`http://localhost:${PORT}/api-docs`);
 });
