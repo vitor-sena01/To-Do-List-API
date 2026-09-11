@@ -4,7 +4,7 @@ const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -21,11 +21,10 @@ let tarefas = [
     },
 ];
 
-// Controle de ID incremental (evita colisões ao deletar itens)
 let proximoId = 2;
 
 // =========================================================================
-// 1. CONFIGURAÇÃO DO SWAGGER (Documentação da API)
+// CONFIGURAÇÃO DO SWAGGER (Documentação)
 // =========================================================================
 const swaggerDocument = {
     openapi: "3.0.0",
@@ -40,22 +39,10 @@ const swaggerDocument = {
             get: {
                 summary: "Retorna todas as tarefas",
                 parameters: [
-                    {
-                        name: "status",
-                        in: "query",
-                        description: "Filtrar por status (Pendente | Concluída)",
-                        schema: { type: "string" }
-                    },
-                    {
-                        name: "prioridade",
-                        in: "query",
-                        description: "Filtrar por prioridade (Baixa | Média | Alta)",
-                        schema: { type: "string" }
-                    }
+                    { name: "status", in: "query", schema: { type: "string" } },
+                    { name: "prioridade", in: "query", schema: { type: "string" } }
                 ],
-                responses: {
-                    "200": { description: "Sucesso ao obter a lista de tarefas." }
-                }
+                responses: { "200": { description: "Sucesso." } }
             },
             post: {
                 summary: "Cria uma nova tarefa",
@@ -76,58 +63,24 @@ const swaggerDocument = {
                         }
                     }
                 },
-                responses: {
-                    "201": { description: "Tarefa criada com sucesso." },
-                    "400": { description: "Campo obrigatório ausente ou valor inválido." }
-                }
+                responses: { "201": { description: "Criado." }, "400": { description: "Erro de validação." } }
             }
         },
         "/api/tarefas/{id}": {
             get: {
-                summary: "Retorna uma tarefa específica pelo ID",
-                parameters: [
-                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
-                ],
-                responses: {
-                    "200": { description: "Tarefa encontrada." },
-                    "404": { description: "Tarefa não encontrada." }
-                }
+                summary: "Retorna uma tarefa pelo ID",
+                parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+                responses: { "200": { description: "Encontrado." }, "404": { description: "Não encontrado." } }
             },
             patch: {
-                summary: "Atualiza campos de uma tarefa específica",
-                parameters: [
-                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
-                ],
-                requestBody: {
-                    required: true,
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    tarefa: { type: "string" },
-                                    descricao: { type: "string" },
-                                    prioridades: { type: "string", enum: ["Baixa", "Média", "Alta"] },
-                                    status: { type: "string", enum: ["Pendente", "Concluída"] }
-                                }
-                            }
-                        }
-                    }
-                },
-                responses: {
-                    "200": { description: "Tarefa atualizada com sucesso." },
-                    "404": { description: "Tarefa não encontrada." }
-                }
+                summary: "Atualiza uma tarefa",
+                parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+                responses: { "200": { description: "Atualizado." }, "404": { description: "Não encontrado." } }
             },
             delete: {
                 summary: "Remove uma tarefa pelo ID",
-                parameters: [
-                    { name: "id", in: "path", required: true, schema: { type: "integer" } }
-                ],
-                responses: {
-                    "200": { description: "Tarefa removida com sucesso." },
-                    "404": { description: "Tarefa não encontrada." }
-                }
+                parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+                responses: { "200": { description: "Removido." }, "404": { description: "Não encontrado." } }
             }
         }
     }
@@ -136,13 +89,12 @@ const swaggerDocument = {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // =========================================================================
-// 2. ROTAS DA API
+// ROTAS DA API
 // =========================================================================
 
 const PRIORIDADES_VALIDAS = ["Baixa", "Média", "Alta"];
 const STATUS_VALIDOS = ["Pendente", "Concluída"];
 
-// GET /api/tarefas — lista todas (com filtros opcionais por query string)
 app.get('/api/tarefas', (req, res) => {
     let resultado = [...tarefas];
 
@@ -156,14 +108,12 @@ app.get('/api/tarefas', (req, res) => {
     res.json(resultado);
 });
 
-// GET /api/tarefas/:id — retorna uma tarefa específica
 app.get('/api/tarefas/:id', (req, res) => {
     const tarefa = tarefas.find(t => t.id === parseInt(req.params.id));
     if (!tarefa) return res.status(404).json({ error: "Tarefa não encontrada." });
     res.json(tarefa);
 });
 
-// POST /api/tarefas — cria uma nova tarefa
 app.post('/api/tarefas', (req, res) => {
     const { tarefa, descricao, prioridades, status } = req.body;
 
@@ -192,7 +142,6 @@ app.post('/api/tarefas', (req, res) => {
     res.status(201).json(novaTarefa);
 });
 
-// PATCH /api/tarefas/:id — atualiza campos de uma tarefa
 app.patch('/api/tarefas/:id', (req, res) => {
     const tarefa = tarefas.find(t => t.id === parseInt(req.params.id));
     if (!tarefa) return res.status(404).json({ error: "Tarefa não encontrada." });
@@ -210,14 +159,14 @@ app.patch('/api/tarefas/:id', (req, res) => {
 
     if (prioridades !== undefined) {
         if (!PRIORIDADES_VALIDAS.includes(prioridades)) {
-            return res.status(400).json({ error: `Prioridade inválida. Use: ${PRIORIDADES_VALIDAS.join(', ')}.` });
+            return res.status(400).json({ error: `Prioridade inválida.` });
         }
         tarefa.prioridades = prioridades;
     }
 
     if (status !== undefined) {
         if (!STATUS_VALIDOS.includes(status)) {
-            return res.status(400).json({ error: `Status inválido. Use: ${STATUS_VALIDOS.join(', ')}.` });
+            return res.status(400).json({ error: `Status inválido.` });
         }
         tarefa.status = status;
     }
@@ -225,7 +174,6 @@ app.patch('/api/tarefas/:id', (req, res) => {
     res.json(tarefa);
 });
 
-// DELETE /api/tarefas/:id — remove uma tarefa
 app.delete('/api/tarefas/:id', (req, res) => {
     const index = tarefas.findIndex(t => t.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: "Tarefa não encontrada." });
@@ -234,12 +182,10 @@ app.delete('/api/tarefas/:id', (req, res) => {
     res.json({ message: "Tarefa removida com sucesso.", tarefa: removida });
 });
 
-// =========================================================================
-// 3. FRONTEND
-// =========================================================================
+// Serve o Front-end estático
 app.use(express.static(path.join(__dirname)));
 
-app.get('/', (req, res) => {
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

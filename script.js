@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api/tarefas';
+const API_URL = '/api/tarefas';
 
 let filtroAtivo = 'Todas';
 let todasTarefas = [];
@@ -14,13 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// API — LEITURA
+// API — LEITURA E ESCRITA
 // =========================================================================
 
 async function carregarTarefas() {
     try {
         const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Erro ao buscar tarefas');
+        
         todasTarefas = await res.json();
+        
         renderizarTarefas();
         atualizarStats();
     } catch (e) {
@@ -28,80 +31,94 @@ async function carregarTarefas() {
     }
 }
 
-// =========================================================================
-// API — ESCRITA
-// =========================================================================
-
 async function adicionarTarefa(dados) {
     const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dados)
     });
-    if (!res.ok) throw new Error('Erro ao adicionar tarefa');
+
+    if (!res.ok) throw new Error('Erro ao adicionar tarefa no servidor');
+    return await res.json();
 }
 
 async function toggleStatus(id, statusAtual) {
     const novoStatus = statusAtual === 'Concluída' ? 'Pendente' : 'Concluída';
-    await fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus })
-    });
-    await carregarTarefas();
+    try {
+        await fetch(`${API_URL}/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: novoStatus })
+        });
+        await carregarTarefas();
+    } catch (e) {
+        console.error('Erro ao atualizar status:', e);
+    }
 }
 
 async function deletarTarefa(id) {
-    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-    await carregarTarefas();
+    try {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        await carregarTarefas();
+    } catch (e) {
+        console.error('Erro ao deletar tarefa:', e);
+    }
 }
 
 // =========================================================================
-// FORMULÁRIO
+// FORMULÁRIO DE CADASTRO
 // =========================================================================
 
 function configurarFormulario() {
+    const form = document.getElementById('tarefaForm');
     const inputTarefa = document.getElementById('tarefa');
     const erroEl = document.getElementById('tarefaErro');
 
-    // Limpa o erro enquanto o usuário digita
-    inputTarefa.addEventListener('input', () => {
+    if (!form) return;
+
+    inputTarefa?.addEventListener('input', () => {
         inputTarefa.classList.remove('input-invalid');
-        erroEl.classList.remove('visible');
+        erroEl?.classList.remove('visible');
     });
 
-    document.getElementById('tarefaForm').addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Validação customizada
-        if (!inputTarefa.value.trim()) {
+        const nomeTarefa = inputTarefa.value.trim();
+
+        if (!nomeTarefa) {
             inputTarefa.classList.add('input-invalid');
-            erroEl.classList.add('visible');
+            erroEl?.classList.add('visible');
             inputTarefa.focus();
             return;
         }
 
-        inputTarefa.classList.remove('input-invalid');
-        erroEl.classList.remove('visible');
+        const btn = form.querySelector('.btn-add');
+        if (btn) btn.disabled = true;
 
-        const btn = e.target.querySelector('.btn-add');
-        btn.disabled = true;
-
+        // Mapeamento idêntico ao esperado pelo server.js
         const dados = {
-            tarefa:      inputTarefa.value,
-            descricao:   document.getElementById('descricao').value,
-            prioridades: document.getElementById('prioridade').value,
+            tarefa:      nomeTarefa,
+            descricao:   document.getElementById('descricao')?.value.trim() || '',
+            prioridades: document.getElementById('prioridade')?.value || 'Média',
             status:      'Pendente'
         };
 
         try {
             await adicionarTarefa(dados);
-            e.target.reset();
+            form.reset();
+
+            // Força a aba ativa para "Todas" para que a nova tarefa recém-criada apareça
+            filtroAtivo = 'Todas';
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.filter === 'Todas');
+            });
+
             await carregarTarefas();
         } catch (err) {
-            console.error(err);
+            console.error('Erro ao salvar tarefa:', err);
         } finally {
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
         }
     });
 }
@@ -122,24 +139,37 @@ function configurarFiltros() {
 }
 
 // =========================================================================
-// RENDERIZAÇÃO
+// RENDERIZAÇÃO VISUAL
 // =========================================================================
 
 function renderizarTarefas() {
     const container  = document.getElementById('listaTarefas');
     const emptyState = document.getElementById('emptyState');
 
+    if (!container) return;
+
+    // Padroniza as chaves vindas da API (prioridades / prioridade)
+    const listaNormalizada = todasTarefas.map(t => ({
+        id: t.id,
+        tarefa: t.tarefa || t.nome || 'Sem título',
+        descricao: t.descricao || '',
+        prioridades: t.prioridades || t.prioridade || 'Média',
+        status: t.status || 'Pendente',
+        criadaEm: t.criadaEm
+    }));
+
     const filtradas = filtroAtivo === 'Todas'
-        ? todasTarefas
-        : todasTarefas.filter(t => t.status === filtroAtivo);
+        ? listaNormalizada
+        : listaNormalizada.filter(t => t.status === filtroAtivo);
 
     container.innerHTML = '';
 
     if (filtradas.length === 0) {
-        emptyState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'block';
         return;
     }
-    emptyState.style.display = 'none';
+    
+    if (emptyState) emptyState.style.display = 'none';
 
     filtradas.forEach((t, i) => {
         const card = criarCard(t, i);
@@ -149,7 +179,11 @@ function renderizarTarefas() {
 
 function criarCard(t, i) {
     const card = document.createElement('div');
-    card.className = `tarefa-card status-${slugify(t.status)} prio-${slugify(t.prioridades)}`;
+    const statusSlug = slugify(t.status);
+    const prioSlug = slugify(t.prioridades);
+
+    // Classes necessárias para a estilização do CSS (borda lateral e badge)
+    card.className = `tarefa-card ${t.status} ${t.prioridades} status-${statusSlug} prio-${prioSlug}`;
     card.style.animationDelay = `${i * 60}ms`;
 
     const concluida = t.status === 'Concluída';
@@ -167,8 +201,8 @@ function criarCard(t, i) {
             <p class="card-title ${concluida ? 'riscado' : ''}">${escapeHtml(t.tarefa)}</p>
             ${t.descricao ? `<p class="card-desc">${escapeHtml(t.descricao)}</p>` : ''}
             <div class="card-meta">
-                <span class="badge prio-badge prio-${slugify(t.prioridades)}">${t.prioridades}</span>
-                <span class="badge status-badge status-${slugify(t.status)}">${t.status}</span>
+                <span class="badge prio-badge prio-${t.prioridades}">${t.prioridades}</span>
+                <span class="badge status-badge status-${t.status}">${t.status}</span>
                 ${t.criadaEm ? `<span class="card-date">${formatarData(t.criadaEm)}</span>` : ''}
             </div>
         </div>
@@ -184,10 +218,15 @@ function criarCard(t, i) {
 }
 
 function atualizarStats() {
-    document.getElementById('countPendente').textContent =
-        todasTarefas.filter(t => t.status === 'Pendente').length;
-    document.getElementById('countConcluida').textContent =
-        todasTarefas.filter(t => t.status === 'Concluída').length;
+    const elPendente = document.getElementById('countPendente');
+    const elConcluida = document.getElementById('countConcluida');
+
+    if (elPendente) {
+        elPendente.textContent = todasTarefas.filter(t => t.status === 'Pendente').length;
+    }
+    if (elConcluida) {
+        elConcluida.textContent = todasTarefas.filter(t => t.status === 'Concluída').length;
+    }
 }
 
 // =========================================================================
@@ -195,10 +234,12 @@ function atualizarStats() {
 // =========================================================================
 
 function slugify(str) {
+    if (!str) return '';
     return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
 }
 
 function escapeHtml(str) {
+    if (!str) return '';
     return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

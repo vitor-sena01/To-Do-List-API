@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Tarefas</title>
+    <title>Lista de Tarefas - Equipe 10</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>✦</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -18,9 +18,9 @@
                 <span class="logo-text">Equipe 10</span>
             </div>
             <div class="header-stats">
-                <span>Task Manager</span>
+                <span>Pendentes: <strong id="countPendente">0</strong></span>
                 <span class="stat-sep">|</span>
-                <span>v1.0.0</span>
+                <span>Concluídas: <strong id="countConcluida">0</strong></span>
             </div>
         </div>
     </header>
@@ -32,19 +32,23 @@
             
             <form id="tarefaForm">
                 <div class="field">
-                    <label for="tarefaInput">Tarefa <span class="required">*</span></label>
-                    <input type="text" id="tarefaInput" required placeholder="Ex: Estudar Histologia">
+                    <label for="tarefa">Tarefa <span class="required">*</span></label>
+                    <input type="text" id="tarefa" required placeholder="Ex: Estudar Histologia">
+                    <div id="tarefaErro" class="field-error">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        O nome da tarefa não pode estar vazio.
+                    </div>
                 </div>
                 
                 <div class="field">
-                    <label for="descricaoInput">Descrição</label>
-                    <textarea id="descricaoInput" rows="2" placeholder="Detalhes da tarefa..."></textarea>
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" rows="2" placeholder="Detalhes da tarefa..."></textarea>
                 </div>
                 
                 <div class="field-row">
                     <div class="field">
-                        <label for="prioridadeSelect">Prioridade</label>
-                        <select id="prioridadeSelect">
+                        <label for="prioridade">Prioridade</label>
+                        <select id="prioridade">
                             <option value="Baixa">Baixa</option>
                             <option value="Média" selected>Média</option>
                             <option value="Alta">Alta</option>
@@ -62,95 +66,23 @@
         <section>
             <div class="list-header">
                 <h2 class="section-title">Suas Tarefas</h2>
+                
+                <div class="filters">
+                    <button type="button" class="filter-btn active" data-filter="Todas">Todas</button>
+                    <button type="button" class="filter-btn" data-filter="Pendente">Pendentes</button>
+                    <button type="button" class="filter-btn" data-filter="Concluída">Concluídas</button>
+                </div>
             </div>
             
+            <div id="emptyState" class="empty-state" style="display: none;">
+                Nenhuma tarefa encontrada por enquanto.
+            </div>
+
             <div id="listaTarefas"></div>
         </section>
 
     </main>
 
-    <script>
-        const API_URL = '/api/tarefas';
-
-        // 1. CARREGAR TAREFAS DO SERVIDOR (Montando a estrutura que casa com o CSS)
-        async function carregarTarefas() {
-            try {
-                const res = await fetch(API_URL);
-                const tarefas = await res.json();
-                const container = document.getElementById('listaTarefas');
-                container.innerHTML = ''; 
-
-                if (tarefas.length === 0) {
-                    container.innerHTML = '<div class="empty-state">Nenhuma tarefa cadastrada por enquanto.</div>';
-                    return;
-                }
-
-                tarefas.forEach(t => {
-                    const card = document.createElement('div');
-                    // Aplica as classes dinâmicas exatas para ler a borda lateral esquerda
-                    card.className = `tarefa-card ${t.prioridades} ${t.status}`;
-                    
-                    card.innerHTML = `
-                        <div class="card-left">
-                            <button class="check-btn" onclick="concluirTarefa(${t.id})" title="Marcar como concluída">✓</button>
-                        </div>
-                        <div class="card-body">
-                            <div class="card-title">${t.tarefa}</div>
-                            <div class="card-desc">${t.descricao || '<i>Sem descrição fornecida.</i>'}</div>
-                            <div class="card-meta">
-                                <span class="badge prio-${t.prioridades}">Prioridade: ${t.prioridades}</span>
-                                <span class="badge status-${t.status}">${t.status}</span>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar tarefas:", error);
-            }
-        }
-
-        // 2. ENVIAR NOVA TAREFA VIA INTERFACE (POST)
-        document.getElementById('tarefaForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const novaTarefa = {
-                tarefa: document.getElementById('tarefaInput').value,
-                descricao: document.getElementById('descricaoInput').value,
-                prioridades: document.getElementById('prioridadeSelect').value,
-                status: 'Pendente'
-            };
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(novaTarefa)
-                });
-
-                document.getElementById('tarefaForm').reset();
-                carregarTarefas(); // Atualiza a tela imediatamente
-            } catch (error) {
-                console.error("Erro ao salvar tarefa:", error);
-            }
-        });
-
-        // 3. ATUALIZAR STATUS DA TAREFA PARA CONCLUÍDA (PATCH)
-        async function concluirTarefa(id) {
-            try {
-                await fetch(`${API_URL}/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'Concluída' })
-                });
-                carregarTarefas(); // Recarrega para aplicar a opacidade e o risco no texto
-            } catch (error) {
-                console.error("Erro ao atualizar status:", error);
-            }
-        }
-
-        // Inicialização automática ao entrar na página
-        carregarTarefas();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
